@@ -92,6 +92,22 @@ const Game = (() => {
     return {forEach, getSpace, getRow, getCol, getDiag, getSize, markSpace, clear, print};
   })();
 
+  const DisplayController = ((Gameboard) => {
+    const gameboardGrid = document.querySelector(".gameboard-grid");
+
+    const render = () => {
+      Gameboard.forEach((entry) => {
+        const entryDiv = document.createElement("div");
+        entryDiv.classList.add("gameboard-entry");
+        entryDiv.textContent = entry;
+        gameboardGrid.appendChild(entryDiv);
+      })
+    };
+
+    return {render};
+  })(Gameboard);
+
+
   const Player1 = createPlayer(Gameboard, 1);
   const Player2 = createPlayer(Gameboard, 2);
 
@@ -156,6 +172,7 @@ const Game = (() => {
     Player2.makeMove(1, 2);
     Player1.makeMove(1, 0);
 
+    DisplayController.render();
     Gameboard.print();
 
     const Status = getStatus();
