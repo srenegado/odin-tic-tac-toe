@@ -20,8 +20,7 @@ function createPlayer(Gameboard, playerNumber) {
 const Game = (() => {
 
   const Gameboard = (() => {
-    const rows = 3;
-    const cols = 3;
+    const n = 3;
 
     const gameboard = [
       [' ', ' ', ' '],
@@ -49,7 +48,7 @@ const Game = (() => {
 
     const getCol = (j) => {
       let colStr = "";
-      for (let i = 0; i < rows; i++) {
+      for (let i = 0; i < n; i++) {
         colStr += gameboard[i][j];
       }
       return colStr;
@@ -59,9 +58,11 @@ const Game = (() => {
       if (diag == 0) {
         return gameboard[0][0] + gameboard[1][1] + gameboard[2][2];
       } else if (diag == 1) {
-        return gameboard[0][2] + gameboard[1][1] + gameboard[0][2];
+        return gameboard[0][2] + gameboard[1][1] + gameboard[2][0];
       }
-    }
+    };
+
+    const getSize = () => n;
 
     const markSpace = (i, j, mark) => {
       gameboard[i][j] = mark;
@@ -78,34 +79,95 @@ const Game = (() => {
     const print = () => {
       let gameboardStr = ""; 
 
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols - 1; j++) {
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n - 1; j++) {
           gameboardStr += gameboard[i][j] + "|";
         }
-        gameboardStr += gameboard[i][cols - 1] + "\n";
+        gameboardStr += gameboard[i][n - 1] + "\n";
       }
 
       console.log(gameboardStr);
     };
 
-    return {forEach, getSpace, getRow, getCol, getDiag, markSpace, clear, print};
+    return {forEach, getSpace, getRow, getCol, getDiag, getSize, markSpace, clear, print};
   })();
 
   const Player1 = createPlayer(Gameboard, 1);
   const Player2 = createPlayer(Gameboard, 2);
 
+  const getStatus = () => {
+      let winner = "No winner";
+      let isOver = false;
+      let draw = false;
+
+      const n = Gameboard.getSize();
+      const numOfDiags = 2;
+
+      for (let i = 0; i < n; i++) {
+        const row = Gameboard.getRow(i);
+        const col = Gameboard.getCol(i);
+        if (row === "xxx" || col === "xxx") {
+          winner = "Player 1";
+          isOver = true;
+          break;
+        } else if (row === "ooo" || col === "ooo") {
+          winner = "Player 2"
+          isOver = true;
+          break;
+        }
+      }
+
+      for (let i = 0; i < numOfDiags; i++) {
+        const diag = Gameboard.getDiag(i)
+        if (diag === "xxx") {
+          winner = "Player 1";
+          isOver = true;
+          break;
+        } else if (diag === "ooo") {
+          winner = "Player 2";
+          isOver = true;
+          break;
+        }
+      }
+
+      if (winner === "No winner") {
+        isOver = true;
+        draw = true;
+        Gameboard.forEach((entry) => {
+          if (entry === " ") {
+            isOver = false;
+            draw = false;
+          }
+        });
+      }
+
+      return {winner, isOver, draw};
+    }
+
   const startGame = () => {
 
     Player1.makeMove(1, 1);
-    Player2.makeMove(1, 0);
-    Player1.makeMove(0, 1);
-    Player2.makeMove(1, 2);
+    Player2.makeMove(2, 0);
     Player1.makeMove(2, 1);
+    Player2.makeMove(0, 1);
+    Player1.makeMove(2, 2);
+    Player2.makeMove(0, 0);
+    Player1.makeMove(0, 2);
+    Player2.makeMove(1, 2);
+    Player1.makeMove(1, 0);
 
     Gameboard.print();
 
-    Gameboard.clear();
-    Gameboard.print();
+    const Status = getStatus();
+    if (Status.isOver) {
+      if (Status.draw) {
+        console.log("It's a draw!");
+      } else {
+        console.log(`${Status.winner} wins!`);
+      }
+    } else {
+      console.log("Game is still being played");
+    }
   };
 
   return {startGame};
