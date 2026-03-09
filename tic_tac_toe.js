@@ -14,10 +14,12 @@ function createPlayer(Gameboard, playerNumber) {
     Gameboard.markSpace(i, j, mark);
   }
 
-  return {makeMove};
+  const getMark = () => mark;
+
+  return {makeMove, getMark};
 }
 
-const Game = (() => {
+const GameController = (() => {
 
   const Gameboard = (() => {
     const n = 3;
@@ -29,8 +31,8 @@ const Game = (() => {
     ];
 
     const forEach = (callback) => {
-      gameboard.forEach((row) => {
-        row.forEach(callback);
+      gameboard.forEach((row, rowIndex) => {
+        row.forEach((element, colIndex) => callback(element, rowIndex, colIndex));
       });
     };
 
@@ -69,8 +71,8 @@ const Game = (() => {
     };
 
     const clear = () => {
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
           gameboard[i][j] = ' ';
         }
       }
@@ -96,98 +98,122 @@ const Game = (() => {
     const gameboardGrid = document.querySelector(".gameboard-grid");
 
     const render = () => {
-      Gameboard.forEach((entry) => {
+      Gameboard.forEach((entry, rowIndex, colIndex) => {
         const entryDiv = document.createElement("div");
         entryDiv.classList.add("gameboard-entry");
         entryDiv.textContent = entry;
+        entryDiv.dataset.id = `${rowIndex}${colIndex}`;
         gameboardGrid.appendChild(entryDiv);
       })
     };
 
-    return {render};
+    const clear = () => {
+      while (gameboardGrid.firstChild) {
+        gameboardGrid.removeChild(gameboardGrid.firstChild);
+      }
+    }
+
+    return {render, clear};
   })(Gameboard);
-
-
+  
   const Player1 = createPlayer(Gameboard, 1);
   const Player2 = createPlayer(Gameboard, 2);
 
+  const Turn = Object.freeze({P1: "P1", P2: "P2"});
+  let currTurn = Turn.P1;
+
   const getStatus = () => {
-      let winner = "No winner";
-      let isOver = false;
-      let draw = false;
+    let winner = "No winner";
+    let isOver = false;
+    let draw = false;
 
-      const n = Gameboard.getSize();
-      const numOfDiags = 2;
+    const n = Gameboard.getSize();
+    const numOfDiags = 2;
 
-      for (let i = 0; i < n; i++) {
-        const row = Gameboard.getRow(i);
-        const col = Gameboard.getCol(i);
-        if (row === "xxx" || col === "xxx") {
-          winner = "Player 1";
-          isOver = true;
-          break;
-        } else if (row === "ooo" || col === "ooo") {
-          winner = "Player 2"
-          isOver = true;
-          break;
-        }
-      }
-
-      for (let i = 0; i < numOfDiags; i++) {
-        const diag = Gameboard.getDiag(i)
-        if (diag === "xxx") {
-          winner = "Player 1";
-          isOver = true;
-          break;
-        } else if (diag === "ooo") {
-          winner = "Player 2";
-          isOver = true;
-          break;
-        }
-      }
-
-      if (winner === "No winner") {
+    for (let i = 0; i < n; i++) {
+      const row = Gameboard.getRow(i);
+      const col = Gameboard.getCol(i);
+      if (row === "xxx" || col === "xxx") {
+        winner = "Player 1";
         isOver = true;
-        draw = true;
-        Gameboard.forEach((entry) => {
-          if (entry === " ") {
-            isOver = false;
-            draw = false;
+        break;
+      } else if (row === "ooo" || col === "ooo") {
+        winner = "Player 2"
+        isOver = true;
+        break;
+      }
+    }
+
+    for (let i = 0; i < numOfDiags; i++) {
+      const diag = Gameboard.getDiag(i)
+      if (diag === "xxx") {
+        winner = "Player 1";
+        isOver = true;
+        break;
+      } else if (diag === "ooo") {
+        winner = "Player 2";
+        isOver = true;
+        break;
+      }
+    }
+
+    if (winner === "No winner") {
+      isOver = true;
+      draw = true;
+      Gameboard.forEach((entry) => {
+        if (entry === " ") {
+          isOver = false;
+          draw = false;
+        }
+      });
+    }
+
+    return {winner, isOver, draw};
+  }
+
+  const setUpPlayerClickEvents = () => {
+    const gameboardEntries = document.querySelectorAll(".gameboard-entry");
+    
+    gameboardEntries.forEach((entryDiv) => {
+      const canBeMarked = entryDiv.textContent === ' ';
+
+      if (canBeMarked) {
+        entryDiv.addEventListener("click", (e) => {
+          const rowIndex = e.target.dataset.id[0];
+          const colIndex = e.target.dataset.id[1];
+
+          if (currTurn === Turn.P1) {
+            e.target.textContent = Player1.getMark();
+            Player1.makeMove(rowIndex, colIndex);
+            currTurn = Turn.P2;
+          } else if (currTurn === Turn.P2) {
+            e.target.textContent = Player2.getMark();
+            Player2.makeMove(rowIndex, colIndex);
+            currTurn = Turn.P1;
+          }
+
+          const Status = getStatus();
+
+          if (Status.isOver) {
+            if (Status.draw) {
+              console.log("It's a draw!");
+            } else {
+              console.log(`${Status.winner} wins!`);
+            }
+          } else {
+            console.log("Game is still playing...");
           }
         });
       }
+    });
+  }
 
-      return {winner, isOver, draw};
-    }
-
-  const startGame = () => {
-
-    Player1.makeMove(1, 1);
-    Player2.makeMove(2, 0);
-    Player1.makeMove(2, 1);
-    Player2.makeMove(0, 1);
-    Player1.makeMove(2, 2);
-    Player2.makeMove(0, 0);
-    Player1.makeMove(0, 2);
-    Player2.makeMove(1, 2);
-    Player1.makeMove(1, 0);
-
+  const start = () => {
     DisplayController.render();
-    Gameboard.print();
-
-    const Status = getStatus();
-    if (Status.isOver) {
-      if (Status.draw) {
-        console.log("It's a draw!");
-      } else {
-        console.log(`${Status.winner} wins!`);
-      }
-    } else {
-      console.log("Game is still being played");
-    }
+    setUpPlayerClickEvents();
   };
 
-  return {startGame};
+  return {start};
 })();
 
-Game.startGame();
+GameController.start();
