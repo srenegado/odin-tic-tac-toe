@@ -175,36 +175,38 @@ const GameController = (() => {
     const gameboardEntries = document.querySelectorAll(".gameboard-entry");
     
     gameboardEntries.forEach((entryDiv) => {
-      const canBeMarked = entryDiv.textContent === ' ';
+      entryDiv.addEventListener("click", (e) => {
+        const canBeMarked = e.target.textContent === ' ';
+        if (!canBeMarked) {
+          return;
+        }
 
-      if (canBeMarked) {
-        entryDiv.addEventListener("click", (e) => {
-          const rowIndex = e.target.dataset.id[0];
-          const colIndex = e.target.dataset.id[1];
+        const rowIndex = e.target.dataset.id[0];
+        const colIndex = e.target.dataset.id[1];
 
-          if (currTurn === Turn.P1) {
-            e.target.textContent = Player1.getMark();
-            Player1.makeMove(rowIndex, colIndex);
-            currTurn = Turn.P2;
-          } else if (currTurn === Turn.P2) {
-            e.target.textContent = Player2.getMark();
-            Player2.makeMove(rowIndex, colIndex);
-            currTurn = Turn.P1;
-          }
+        if (currTurn === Turn.P1) {
+          e.target.textContent = Player1.getMark();
+          Player1.makeMove(rowIndex, colIndex);
+          currTurn = Turn.P2;
+        } else if (currTurn === Turn.P2) {
+          e.target.textContent = Player2.getMark();
+          Player2.makeMove(rowIndex, colIndex);
+          currTurn = Turn.P1;
+        }
 
-          const Status = getStatus();
+        const Status = getStatus();
 
-          if (Status.isOver) {
-            if (Status.draw) {
-              console.log("It's a draw!");
-            } else {
-              console.log(`${Status.winner} wins!`);
-            }
+        if (Status.isOver) {
+          if (Status.draw) {
+            console.log("It's a draw!");
           } else {
-            console.log("Game is still playing...");
+            console.log(`${Status.winner} wins!`);
           }
-        });
-      }
+        } else {
+          console.log("Game is still playing...");
+        }
+      });
+
     });
   }
 
