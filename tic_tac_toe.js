@@ -113,7 +113,12 @@ const GameController = (() => {
       }
     }
 
-    return {render, clear};
+    const updateResults = (result) => {
+      const resultsDisplay = document.querySelector(".results-display");  
+      resultsDisplay.textContent = result;
+    };
+
+    return {render, clear, updateResults};
   })(Gameboard);
   
   const Player1 = createPlayer(Gameboard, 1);
@@ -169,7 +174,7 @@ const GameController = (() => {
     }
 
     return {winner, isOver, draw};
-  }
+  };
 
   const setUpPlayerClickEvents = () => {
     const gameboardEntries = document.querySelectorAll(".gameboard-entry");
@@ -198,12 +203,10 @@ const GameController = (() => {
 
         if (Status.isOver) {
           if (Status.draw) {
-            console.log("It's a draw!");
+            DisplayController.updateResults("It's a draw!");
           } else {
-            console.log(`${Status.winner} wins!`);
+            DisplayController.updateResults(`${Status.winner} wins!`);
           }
-        } else {
-          console.log("Game is still playing...");
         }
       });
 

@@ -15,7 +15,8 @@ body {
   margin: 0 auto;
 }
 
-.gameboard-entry {
+.gameboard-entry,
+.results-display {
   width: 100%;
   background-color: white;
   display: flex;
