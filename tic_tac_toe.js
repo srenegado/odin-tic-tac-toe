@@ -107,18 +107,36 @@ const GameController = (() => {
       })
     };
 
-    const clear = () => {
-      while (gameboardGrid.firstChild) {
-        gameboardGrid.removeChild(gameboardGrid.firstChild);
-      }
-    }
-
     const updateResults = (result) => {
       const resultsDisplay = document.querySelector(".results-display");  
       resultsDisplay.textContent = result;
     };
 
-    return {render, clear, updateResults};
+    const clear = () => {
+      while (gameboardGrid.firstChild) {
+        gameboardGrid.removeChild(gameboardGrid.firstChild);
+      }
+      updateResults(""); 
+    };
+
+    const showRestartButton = () => {
+      const restartButton = document.createElement("button");
+      const buttonWrapper = document.createElement("div");
+
+      restartButton.classList.add("restart-button");
+      buttonWrapper.classList.add("button-wrapper");
+      restartButton.textContent = "Restart";
+
+      buttonWrapper.appendChild(restartButton);
+      document.body.appendChild(buttonWrapper);
+    };
+
+    const removeRestartButton = () => {
+      const buttonWrapper = document.querySelector(".button-wrapper");
+      buttonWrapper.remove();
+    }
+
+    return {render, clear, updateResults, showRestartButton, removeRestartButton};
   })(Gameboard);
   
   const Player1 = createPlayer(Gameboard, 1);
@@ -176,42 +194,62 @@ const GameController = (() => {
     return {winner, isOver, draw};
   };
 
+  const setupRestartButton = () => {
+    DisplayController.showRestartButton();
+
+    const restartButton = document.querySelector(".restart-button");
+
+    restartButton.addEventListener("click", (e) => {
+      Gameboard.clear();
+      DisplayController.clear();
+      DisplayController.render();
+      DisplayController.removeRestartButton();
+      setUpPlayerClickEvents();
+      currTurn = Turn.P1;
+    });    
+  };
+
+  const handlePlayerClick = (e) => {
+    const canBeMarked = e.target.textContent === ' ';
+    if (!canBeMarked) {
+      return;
+    }
+
+    const rowIndex = e.target.dataset.id[0];
+    const colIndex = e.target.dataset.id[1];
+    if (currTurn === Turn.P1) {
+      e.target.textContent = Player1.getMark();
+      Player1.makeMove(rowIndex, colIndex);
+      currTurn = Turn.P2;
+    } else if (currTurn === Turn.P2) {
+      e.target.textContent = Player2.getMark();
+      Player2.makeMove(rowIndex, colIndex);
+      currTurn = Turn.P1;
+    }
+
+    const Status = getStatus();
+    if (Status.isOver) {
+      if (Status.draw) {
+        DisplayController.updateResults("It's a draw!");
+      } else {
+        DisplayController.updateResults(`${Status.winner} wins!`);
+      }
+
+      setupRestartButton();
+
+      const gameboardEntries = document.querySelectorAll(".gameboard-entry");
+      gameboardEntries.forEach((entryDiv) => {
+        entryDiv.classList.add("disable-clicks");
+      });
+    }
+  };
+
   const setUpPlayerClickEvents = () => {
     const gameboardEntries = document.querySelectorAll(".gameboard-entry");
-    
     gameboardEntries.forEach((entryDiv) => {
-      entryDiv.addEventListener("click", (e) => {
-        const canBeMarked = e.target.textContent === ' ';
-        if (!canBeMarked) {
-          return;
-        }
-
-        const rowIndex = e.target.dataset.id[0];
-        const colIndex = e.target.dataset.id[1];
-
-        if (currTurn === Turn.P1) {
-          e.target.textContent = Player1.getMark();
-          Player1.makeMove(rowIndex, colIndex);
-          currTurn = Turn.P2;
-        } else if (currTurn === Turn.P2) {
-          e.target.textContent = Player2.getMark();
-          Player2.makeMove(rowIndex, colIndex);
-          currTurn = Turn.P1;
-        }
-
-        const Status = getStatus();
-
-        if (Status.isOver) {
-          if (Status.draw) {
-            DisplayController.updateResults("It's a draw!");
-          } else {
-            DisplayController.updateResults(`${Status.winner} wins!`);
-          }
-        }
-      });
-
+      entryDiv.addEventListener("click", handlePlayerClick);
     });
-  }
+  };
 
   const start = () => {
     DisplayController.render();

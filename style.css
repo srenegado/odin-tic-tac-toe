@@ -25,3 +25,20 @@ body {
   font-size: 5rem;
   color: gray;
 }
+
+.restart-button {
+  font-size: 1rem;
+  color: gray;
+  background-color: white;
+  border: 1px solid gray;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.button-wrapper {
+  text-align: center;
+}
+
+.disable-clicks {
+  pointer-events: none;
+}
